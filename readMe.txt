@@ -9,9 +9,9 @@ Mahdollisuutta valita nimeä tai tiedostotyyppiä ei ole, joten nimen pitää ol
 
 Eipä tässä muuta, kiitos lukemisesta :)
 
-----------------------
-//////////////////////
-----------------------
+
+//////////////////////////////////////////////////////////////////
+
 
 LottoStat is, despite its lottery-related name, a general-purpose program in which you can store numbers, that will be shown in a table in a descending order
 according to their frequency
