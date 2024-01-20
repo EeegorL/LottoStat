@@ -6,10 +6,13 @@ import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
@@ -32,23 +35,25 @@ public class LottoStat {
     public static String[] deleteSuccessText = {"Poistettu", "Deleted"};
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws URISyntaxException, IOException {
         try {
-            File excelFile = new File("src/main/java/LottoStat/stats.xlsx");
-            FileInputStream excelFileStream = new FileInputStream(excelFile);
-            XSSFWorkbook excelHandler = new XSSFWorkbook(excelFileStream);
+            File stats = new File("stats.xlsx");
+
+            InputStream fis = new BufferedInputStream(new FileInputStream(stats));
+            XSSFWorkbook excelHandler = new XSSFWorkbook(fis);
+
             SheetHandler sheetHandler = new SheetHandler(excelHandler);
 
             handler = sheetHandler;
             languageInt = 0;
 
             swing();
-        } catch (FileNotFoundException err) {
-            throw new Error(err);
-        } catch (IOException err) {
-            throw new Error(err);
-        } catch (Error err) {
-            throw new Error(err);
+        } catch (FileNotFoundException e1) {
+            showStatusMsg("Virhe/Error " +  e1.getClass(), true);
+        } catch (IOException e1) {
+            showStatusMsg("Virhe/Error " +  e1.getClass(), true);
+        } catch (Error e1) {
+            showStatusMsg("Virhe/Error " +  e1.getClass(), true);
         }
     }
 
@@ -77,13 +82,18 @@ public class LottoStat {
                             handler.incrementOrCreate(Integer.valueOf(value));
                             
                             resultTable.setModel(new DefaultTableModel(handler.getAllRows(), columns.toArray()));
+                            showStatusMsg(addSuccessText[languageInt], false);
+
                         }
-                        catch (NumberFormatException e1) {} 
-                        catch (IOException e1) {}
+                        catch (NumberFormatException e1) {
+                            showStatusMsg(wrongFormatText[languageInt], true);
+                        } catch (IOException e1) {
+                            showStatusMsg("Virhe/Error " +  e1.getClass(), true);
+                        } catch (URISyntaxException e1) {
+                            e1.printStackTrace();
+                        }
                     }
-                    showStatusMsg(addSuccessText[languageInt], false);
-                } 
-                else showStatusMsg(wrongFormatText[languageInt], true);
+                } else showStatusMsg(wrongFormatText[languageInt], true);
             }
         });
         
@@ -96,8 +106,10 @@ public class LottoStat {
                     resultTable.setModel(new DefaultTableModel(handler.getAllRows(), columns.toArray()));
                     showStatusMsg(deleteSuccessText[languageInt], false);
                 } catch (IOException e1) {
-                    showStatusMsg("Virhe/Error", true);
-                    throw new Error(e1);
+                    showStatusMsg("Virhe/Error " +  e1.getClass(), true);
+                } catch (URISyntaxException e1) {
+                    showStatusMsg("Virhe/Error " +  e1.getClass(), true);
+                    e1.printStackTrace();
                 }
             }
         });
@@ -113,7 +125,6 @@ public class LottoStat {
                 eraseDataButton.setText(eraseButtonText[languageInt]); 
             }
         });
-
 
 
         // result table

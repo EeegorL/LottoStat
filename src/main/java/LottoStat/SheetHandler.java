@@ -5,6 +5,7 @@ import org.apache.poi.ss.usermodel.Row;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -19,7 +20,7 @@ public class SheetHandler {
 
     public SheetHandler(XSSFWorkbook excel) {
         this.excel = excel;
-        this.table = excel.getSheet("LottoStat");
+        this.table = excel.getSheetAt(0);
     }
 
     public Object[][] getAllRows() {
@@ -51,7 +52,7 @@ public class SheetHandler {
         return new P(false, 0);
     }
 
-    public void incrementOrCreate(int value) throws IOException {
+    public void incrementOrCreate(int value) throws IOException, URISyntaxException {
         P rowWithValue = numberExists(value);
 
         if (rowWithValue.exists()) {
@@ -71,14 +72,16 @@ public class SheetHandler {
         }
     }
 
-    public void update() throws IOException {
-        FileOutputStream outFile = new FileOutputStream(
-                new File("src/main/java/LottoStat/stats.xlsx"));
+    public void update() throws IOException, URISyntaxException {
+        File abs = new File("stats.xlsx");
+        FileOutputStream outFile = new FileOutputStream(abs);// null
+
+
         excel.write(outFile);
         outFile.close();
     }
 
-    public void eraseData() throws IOException {
+    public void eraseData() throws IOException, URISyntaxException {
         if(table.getPhysicalNumberOfRows() > 0) {
             for(int i=0; i<= table.getLastRowNum(); i++){
                 Row row = table.getRow(i);
