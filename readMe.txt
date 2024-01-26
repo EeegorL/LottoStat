@@ -2,7 +2,7 @@ LottoStat on lottoon viittavasta nimestään huolimatta yksinkertainen yleiskäy
 jotka ohjelma esittää taulukossa niiden esiintyvyysmääräjärjestyksessä laskevasti.
 
 Ohjelman käyttöliittymässä on syöttökenttä ja -nappi, kielenvaihtonappi (suomi/englanti), tiedoston valitsemiseen käytettävä nappi,
- sekä tiedot tyhjentävä nappi (kaikki tiedot poistuvat, ilman varmistusta tai palauttamisen mahdollisuutta)
+sekä tiedot tyhjentävä nappi (kaikki tiedot poistuvat, ilman varmistusta tai palauttamisen mahdollisuutta)
 
 Eipä tässä muuta, kiitos lukemisesta :)
 
