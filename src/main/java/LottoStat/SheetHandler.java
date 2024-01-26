@@ -1,7 +1,9 @@
 package LottoStat;
 
 import org.apache.poi.ss.usermodel.Row;
-
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,17 +12,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class SheetHandler {
     private XSSFWorkbook excel;
     private Sheet table;
+    private File stats;
 
-    public SheetHandler(XSSFWorkbook excel) {
+    public SheetHandler(XSSFWorkbook excel, File stats) {
         this.excel = excel;
         this.table = excel.getSheetAt(0);
+        this.stats = stats;
     }
 
     public Object[][] getAllRows() {
@@ -28,7 +29,10 @@ public class SheetHandler {
 
         for (int i = 0; i < table.getPhysicalNumberOfRows(); i++) {
             Row row = table.getRow(i);
-            values.add(new String[] {String.valueOf((int)row.getCell(0).getNumericCellValue()), String.valueOf((int)row.getCell(1).getNumericCellValue())});
+
+            if(row != null && row.getCell(0) != null && row.getCell(1) != null) { //if the row exists and has the two required cells
+                values.add(new String[] {String.valueOf((int)row.getCell(0).getNumericCellValue()), String.valueOf((int)row.getCell(1).getNumericCellValue())});
+            } 
         }
         
         Collections.sort(values, new Comparator<String[]>() { //sorts the values descendingly
@@ -44,10 +48,11 @@ public class SheetHandler {
     public P numberExists(int number) {
         for (int i = 0; i < table.getPhysicalNumberOfRows(); i++) {
             Row row = table.getRow(i);
-            Cell titleCell = row.getCell(0);
-
-            if ((int) titleCell.getNumericCellValue() == number)
-                return new P(true, i);
+            if(row != null) {
+                Cell titleCell = row.getCell(0);
+                if ((int) titleCell.getNumericCellValue() == number)
+                    return new P(true, i);
+            }
         }
         return new P(false, 0);
     }
@@ -73,9 +78,7 @@ public class SheetHandler {
     }
 
     public void update() throws IOException, URISyntaxException {
-        File abs = new File("stats.xlsx");
-        FileOutputStream outFile = new FileOutputStream(abs);// null
-
+        FileOutputStream outFile = new FileOutputStream(stats);
 
         excel.write(outFile);
         outFile.close();
@@ -85,7 +88,7 @@ public class SheetHandler {
         if(table.getPhysicalNumberOfRows() > 0) {
             for(int i=0; i<= table.getLastRowNum(); i++){
                 Row row = table.getRow(i);
-                table.removeRow(row);
+                if(row != null) table.removeRow(row);
             }
         }
         update();

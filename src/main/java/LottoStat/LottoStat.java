@@ -1,6 +1,7 @@
 package LottoStat;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
@@ -9,14 +10,12 @@ import java.awt.event.ActionListener;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
-import org.apache.poi.xssf.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class LottoStat {
     public static SheetHandler handler;
@@ -24,6 +23,8 @@ public class LottoStat {
     public static TableModel resultTableModel;
     public static ArrayList<String> columns;
     public static JFrame mainFrame;
+    public static JScrollPane scrollPane;
+    public static File chosenFile;
     public static int languageInt; // 0 = finnish, 1 = english
 
     public static String[] inputText = {"Syötä tulos pilkuilla erotettuna, esim. 1,2,30,4,531,6", "Insert result separated by commas, e.g. 1,2,30,4,531,6"};
@@ -33,28 +34,14 @@ public class LottoStat {
     public static String[] addSuccessText = {"Lisätty", "Added"};
     public static String[] eraseButtonText = {"Poista kaikki", "Erase all"};
     public static String[] deleteSuccessText = {"Poistettu", "Deleted"};
+    public static String[] changeFileText = {"Vaihda tiedostoa", "Change file"};
+    public static String[] chosenFileText = {"Tiedosto", "File"};
+    public static String[] wrongXLSXformat = {"Vääränmuotoinen xlsx-tiedosto", "Wrong xlsx-file format"};
 
 
     public static void main(String[] args) throws URISyntaxException, IOException {
-        try {
-            File stats = new File("stats.xlsx");
-
-            InputStream fis = new BufferedInputStream(new FileInputStream(stats));
-            XSSFWorkbook excelHandler = new XSSFWorkbook(fis);
-
-            SheetHandler sheetHandler = new SheetHandler(excelHandler);
-
-            handler = sheetHandler;
             languageInt = 0;
-
             swing();
-        } catch (FileNotFoundException e1) {
-            showStatusMsg("Virhe/Error " +  e1.getClass(), true);
-        } catch (IOException e1) {
-            showStatusMsg("Virhe/Error " +  e1.getClass(), true);
-        } catch (Error e1) {
-            showStatusMsg("Virhe/Error " +  e1.getClass(), true);
-        }
     }
 
     public static void swing() {
@@ -65,7 +52,35 @@ public class LottoStat {
         mainFrame.setLayout(null);
         mainFrame.setVisible(true);
         mainFrame.setResizable(false);
+        JLabel chosenFileName = new JLabel("");
 
+
+        JButton changeFile = new JButton(changeFileText[languageInt]);
+        changeFile.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                JFileChooser chooser = new JFileChooser();
+                FileNameExtensionFilter filter = new FileNameExtensionFilter("Excel-table", "xlsx", "xlsx");
+                chooser.setFileFilter(filter);
+
+                int i = chooser.showOpenDialog(mainFrame);
+                if(i == JFileChooser.APPROVE_OPTION) {
+                    chosenFile = chooser.getSelectedFile();
+
+                    try{handler = new SheetHandler(new XSSFWorkbook(new BufferedInputStream(new FileInputStream(chosenFile))), chosenFile);}
+                    catch(IOException err) {showStatusMsg("Virhe/Error " +  err.getClass(), true);}
+                    
+                    resultTableModel = new DefaultTableModel(handler.getAllRows(), columns.toArray());  
+
+                    chosenFileName.setText(String.format("%s: %s", chosenFileText[languageInt], chosenFile.getName()));
+                    chosenFileName.setBounds(0, 0, chosenFile.getName().length() * 10, 20);
+                    
+                    update();
+                }
+            }
+        });
+        
         JTextArea insert = new JTextArea();
         JLabel insertTitle = new JLabel(inputText[languageInt]);
 
@@ -75,15 +90,15 @@ public class LottoStat {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String insertValue = insert.getText();          
-                
-                if(Pattern.matches("^[0-9,]*$", insertValue)) {
+                if(chosenFile != null) {
+                  if(Pattern.matches("^[0-9,]*$", insertValue)) {
                     for(String value : insertValue.split(",")) {
                         try {
                             handler.incrementOrCreate(Integer.valueOf(value));
                             
-                            resultTable.setModel(new DefaultTableModel(handler.getAllRows(), columns.toArray()));
+                            // resultTable.setModel(new DefaultTableModel(handler.getAllRows(), columns.toArray()));
+                            update();
                             showStatusMsg(addSuccessText[languageInt], false);
-
                         }
                         catch (NumberFormatException e1) {
                             showStatusMsg(wrongFormatText[languageInt], true);
@@ -94,6 +109,8 @@ public class LottoStat {
                         }
                     }
                 } else showStatusMsg(wrongFormatText[languageInt], true);
+                }
+ 
             }
         });
         
@@ -123,22 +140,24 @@ public class LottoStat {
                 submitButton.setText(sendText[languageInt]);
                 langButton.setText(langText[languageInt]); 
                 eraseDataButton.setText(eraseButtonText[languageInt]); 
+                changeFile.setText(changeFileText[languageInt]);
+                chosenFileName.setText(String.format("%s: %s", chosenFileText[languageInt], chosenFile == null ? "" : chosenFile.getName()));
             }
         });
-
 
         // result table
         columns = new ArrayList<String>();
         columns.add("Num");
         columns.add("x");
-        resultTableModel = new DefaultTableModel(handler.getAllRows(), columns.toArray());
+        resultTableModel = new DefaultTableModel(null, columns.toArray());
+
  
         resultTable = new JTable(resultTableModel) {
             public boolean isCellEditable(int row, int column) {                
                     return false;               
             };
         };
-        JScrollPane scrollPane = new JScrollPane(resultTable);
+        scrollPane = new JScrollPane(resultTable);
 
         JLabel credits = new JLabel("Mikko Egor Legezin, 2024");
 
@@ -150,6 +169,7 @@ public class LottoStat {
         langButton.setBounds(1050, 15, 100,25);
         credits.setBounds(0, mainFrame.getHeight() - 64, 1300, 35);
         eraseDataButton.setBounds(1020, credits.getY() - 30, eraseDataButton.getText().length() * 15,25);
+        changeFile.setBounds(600, 25, changeFile.getText().length() * 10, 25);
 
         // pushing
         mainFrame.add(insert);
@@ -159,6 +179,8 @@ public class LottoStat {
         mainFrame.add(langButton);
         mainFrame.add(credits);
         mainFrame.add(eraseDataButton);
+        mainFrame.add(changeFile);
+        mainFrame.add(chosenFileName);
 
 
         // styles
@@ -212,5 +234,9 @@ public class LottoStat {
                 }
             }, 1500
     );
+    }
+
+    public static void update() {
+        resultTable.setModel(new DefaultTableModel(handler.getAllRows(), columns.toArray()));
     }
 }
